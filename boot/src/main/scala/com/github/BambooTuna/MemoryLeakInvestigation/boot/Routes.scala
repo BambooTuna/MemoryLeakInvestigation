@@ -27,17 +27,14 @@ object Routes {
   val sink          = Sink.foreach[Int](v => v)
   val runnableGraph = source.toMat(sink)(Keep.right)
 
-  def rotateActorMateriazlier(implicit system: ActorSystem) = {
+  def rotateActorMateriazlier(implicit system: ActorSystem, materializer: ActorMaterializer) = {
     path("rotate") {
       get {
-        implicit val materializer: ActorMaterializer = ActorMaterializer()
-        val result                                   = runnableGraph.run()
+        val result = runnableGraph.run()
         onComplete(result) {
           case Success(v) =>
-            materializer.shutdown()
             complete(s"Success: $v")
           case Failure(exception) =>
-            materializer.shutdown()
             complete(s"error: ${exception.getMessage}")
         }
       }
@@ -66,10 +63,6 @@ object Routes {
   }
 
   def route(implicit system: ActorSystem, materializer: ActorMaterializer): Route =
-    ping ~ rotateActorMateriazlier ~ createActorMateriazlier
+    root ~ ping ~ rotateActorMateriazlier ~ createActorMateriazlier
 
-}
-
-class Test() {
-  val a = 1L
 }
